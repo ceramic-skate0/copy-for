@@ -28,8 +28,8 @@ class BurpExtender(IBurpExtender, IContextMenuFactory, ITab, IExtensionStateList
         "curl": "curl -X '{method}' {headers} '{url}'",
         "ffuf": "ffuf -u '{baseurl}/FUZZ' {headers}",
         "jwt_tool": "python3 jwt_tool.py -t '{url}' {headers} {cookies} -M at",
-        "nikto": "nikto.pl -F htm -S . -o . -h '{url}'",
-        "nmap": "nmap {hostname} -oA '{filename}' -Pn -p- -sCV",
+        "nikto": "nikto -F htm -S . -o . -h '{url}'",
+        "nmap": "nmap {hostname} -Pn -p-",
         "nuclei": "nuclei -u '{baseurl}' -me '{directory}' -H 'User-Agent: {ua}'",
         "wget": "wget '{url}' {headers}",
         "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:132.0) Gecko/20100101 Firefox/132.0"
@@ -45,6 +45,7 @@ class BurpExtender(IBurpExtender, IContextMenuFactory, ITab, IExtensionStateList
         explanation_text = """Variable substitution:
         {baseurl} - Base URL (protocol and domain)
         {body} - Request body (if present)
+        {cookies} - Cookie header value (raw)
         {directory} - Safe directory name based on base URL
         {url} - Full URL
         {filename} - Safe filename based on hostname
@@ -181,13 +182,13 @@ class BurpExtender(IBurpExtender, IContextMenuFactory, ITab, IExtensionStateList
         callbacks.addSuiteTab(self)
         callbacks.registerContextMenuFactory(self)
         self.copy_options = [
-            {"name": "Copy for curl", "formatter": self.format_curl, "tool": "curl"},
-            {"name": "Copy for ffuf", "formatter": self.format, "tool": "ffuf"},
-            {"name": "Copy for jwt_tool.py", "formatter": self.format_jwt_tool, "tool": "jwt_tool"},
-            {"name": "Copy for Nikto", "formatter": self.format, "tool": "nikto"},
-            {"name": "Copy for Nmap", "formatter": self.format, "tool": "nmap"}, 
-            {"name": "Copy for Nuclei", "formatter": self.format, "tool": "nuclei"},
-            {"name": "Copy for wget", "formatter": self.format, "tool": "wget"}
+            {"name": "Copyfor curl", "formatter": self.format_curl, "tool": "curl"},
+            {"name": "Copyfor ffuf", "formatter": self.format, "tool": "ffuf"},
+            {"name": "Copyfor jwt_tool.py", "formatter": self.format_jwt_tool, "tool": "jwt_tool"},
+            {"name": "Copyfor Nikto", "formatter": self.format, "tool": "nikto"},
+            {"name": "Copyfor Nmap", "formatter": self.format, "tool": "nmap"}, 
+            {"name": "Copyfor Nuclei", "formatter": self.format, "tool": "nuclei"},
+            {"name": "Copyfor wget", "formatter": self.format, "tool": "wget"}
         ]
         # Sort static tools alphabetically by name
         self.copy_options = sorted(self.copy_options, key=lambda x: x["name"].lower())
@@ -422,6 +423,8 @@ class BurpExtender(IBurpExtender, IContextMenuFactory, ITab, IExtensionStateList
         filename = self.get_path_safe_name(hostname)
         directory = self.get_path_safe_name(base_url)
         headers_str = ' '.join(["{} '{}'".format(header_prefix, self.escape(header)) for header in headers[1:]])
+        cookie_header = next((h for h in headers if h.lower().startswith("cookie:")), None)
+        cookies = cookie_header.split(":", 1)[1].strip() if cookie_header else ''
         return {
             'url': self.escape(str(url)),
             'baseurl': base_url,
@@ -431,6 +434,7 @@ class BurpExtender(IBurpExtender, IContextMenuFactory, ITab, IExtensionStateList
             'port': port,
             'method': method,
             'body': self.escape(body) if body else '',
+            'cookies': self.escape(cookies) if cookies else '',
             'headers': headers_str,
             'ua': self.flag_values.get("ua", ""),
         }
