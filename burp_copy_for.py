@@ -28,7 +28,7 @@ class BurpExtender(IBurpExtender, IContextMenuFactory, ITab, IExtensionStateList
         "curl": "curl -X '{method}' {headers} '{url}'",
         "ffuf": "ffuf -u '{baseurl}/FUZZ' {headers}",
         "jwt_tool": "python3 jwt_tool.py -t '{url}' {headers} {cookies} -M at",
-        "nikto": "nikto -F htm -S . -o . -h '{url}'",
+        "nikto": "nikto.pl -F htm -S . -o . -h '{url}'",
         "nmap": "nmap {hostname} -Pn -p-",
         "nuclei": "nuclei -u '{baseurl}' -me '{directory}' -H 'User-Agent: {ua}'",
         "wget": "wget '{url}' {headers}",
